@@ -37,7 +37,7 @@ export default function AdminPage() {
       <section className="summary-grid admin-summary-grid">
         <SummaryCard label="Paid sales" value={money(paidTotal)} detail={`${regular.length} regular customers`} />
         <SummaryCard label="All customers" value={String(data.sales.length)} detail="Includes promotional and receivable" />
-        <SummaryCard label="Expected cash drawer" value={money(expectedCash)} detail={`Starting float ${money(data.session?.opening_cash || 0)} + cash sales`} />
+        <SummaryCard label="Expected cash drawer" value={money(expectedCash)} detail={`Starting float ${money(data.session?.opening_cash || 0)} + net cash after change`} />
         <SummaryCard label="Bread left" value={`${remainingPieces} pcs`} detail={`${data.stock.length} stock-counted items`} />
       </section>
       <section className="admin-shortcuts">

@@ -39,9 +39,10 @@ export default function SalePage() {
 
   function addProduct(product) {
     setError('')
-    if (product.stock === 0) return
+    const stockTracked = product.stock !== null && product.stock !== undefined
+    if (stockTracked && product.stock <= 0) return
     const existing = cart.find((item) => item.product_id === product.id)
-    if (product.stock !== null && (existing?.qty || 0) >= product.stock) {
+    if (stockTracked && (existing?.qty || 0) >= product.stock) {
       setError(`Not enough stock for ${product.name}.`)
       return
     }
@@ -52,6 +53,16 @@ export default function SalePage() {
 
   function changeQty(id, delta) {
     const product = products.find((entry) => entry.id === id)
+    const stockTracked = product && product.stock !== null && product.stock !== undefined
+    if (delta > 0 && (!product || (stockTracked && product.stock <= 0))) {
+      setError(product ? `Not enough stock for ${product.name}.` : 'This item is no longer available.')
+      return
+    }
+    if (delta > 0 && stockTracked && cart.find((item) => item.product_id === id)?.qty >= product.stock) {
+      setError(`Not enough stock for ${product.name}.`)
+      return
+    }
+    setError('')
     setCart((items) => items.map((item) => item.product_id === id
       ? { ...item, qty: Math.max(0, Math.min(item.qty + delta, product?.stock ?? Infinity)) }
       : item).filter((item) => item.qty > 0))
@@ -114,20 +125,31 @@ export default function SalePage() {
             {categories.map((name) => <button key={name} type="button" onClick={() => setCategory(name)} className={`category-tab ${category === name ? 'selected' : ''}`}>{name}</button>)}
           </div>
           <div className="product-grid">
-            {visibleProducts.map((product) => <button type="button" key={product.id} className="product-card" disabled={product.stock === 0} onClick={() => addProduct(product)}>
-              <span className="product-name">{product.name}</span><strong>{money(product.price)}</strong>
-              <span className={product.stock === 0 ? 'stock sold-out' : 'stock'}>{product.stock === null ? 'Stock not tracked' : product.stock === 0 ? 'Sold out' : `${product.stock} left`}</span>
-            </button>)}
+            {visibleProducts.map((product) => {
+              const stockTracked = product.stock !== null && product.stock !== undefined
+              const qtyInCart = cart.find((item) => item.product_id === product.id)?.qty || 0
+              const available = stockTracked ? Math.max(0, product.stock - qtyInCart) : null
+              const soldOut = available === 0
+              return <button type="button" key={product.id} className="product-card" disabled={soldOut} onClick={() => addProduct(product)}>
+                <span className="product-name">{product.name}</span><strong>{money(product.price)}</strong>
+                <span className={soldOut ? 'stock sold-out' : 'stock'}>{stockTracked ? soldOut ? 'Sold out' : `${available} left` : 'Stock not tracked'}</span>
+              </button>
+            })}
             {!visibleProducts.length && <div className="empty-state">No items in this category yet.</div>}
           </div>
         </section>
         <aside className="panel order-panel">
           <div className="panel-title"><h2>Customer's order</h2><span>{cart.reduce((sum, item) => sum + item.qty, 0)} pcs</span></div>
           <div className="cart-list">
-            {cart.map((item) => <div className="cart-row" key={item.product_id}>
-              <div className="cart-item-name">{item.name}<span>{money(item.price)} each</span></div>
-              <div className="quantity-control"><button aria-label={`Remove one ${item.name}`} type="button" onClick={() => changeQty(item.product_id, -1)}><Minus size={16} /></button><strong>{item.qty}</strong><button aria-label={`Add one ${item.name}`} type="button" onClick={() => changeQty(item.product_id, 1)}><Plus size={16} /></button></div>
-            </div>)}
+            {cart.map((item) => {
+              const product = products.find((entry) => entry.id === item.product_id)
+              const stockTracked = product?.stock !== null && product?.stock !== undefined
+              const stockLimitReached = !product || (stockTracked && item.qty >= product.stock)
+              return <div className="cart-row" key={item.product_id}>
+                <div className="cart-item-name">{item.name}<span>{money(item.price)} each</span></div>
+                <div className="quantity-control"><button aria-label={`Remove one ${item.name}`} type="button" onClick={() => changeQty(item.product_id, -1)}><Minus size={16} /></button><strong>{item.qty}</strong><button aria-label={`Add one ${item.name}`} type="button" disabled={stockLimitReached} onClick={() => changeQty(item.product_id, 1)}><Plus size={16} /></button></div>
+              </div>
+            })}
             {!cart.length && <div className="empty-state cart-empty"><div className="bread-emoji" aria-hidden="true">🥖</div>Your order is empty.<br />Choose bread to get started.</div>}
           </div>
           {!!cart.length && <button className="text-button clear-cart" type="button" onClick={() => setCart([])}><Trash2 size={16} /> Clear order</button>}

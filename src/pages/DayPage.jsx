@@ -121,8 +121,8 @@ export default function DayPage() {
       {session && <>
         <section className="day-money-grid">
           <article className="summary-card"><span>Starting change money</span><strong>{money(session.opening_cash)}</strong><small>Counted by {session.opened_by}</small></article>
-          <article className="summary-card"><span>Cash sales added</span><strong>{money(paidCash)}</strong><small>Cash portion of regular sales</small></article>
-          <article className="summary-card"><span>Expected cash in drawer</span><strong>{money(expectedCash)}</strong><small>Starting cash + cash payments</small></article>
+          <article className="summary-card"><span>Cash sales kept</span><strong>{money(paidCash)}</strong><small>Cash collected after change returned</small></article>
+          <article className="summary-card"><span>Expected cash in drawer</span><strong>{money(expectedCash)}</strong><small>Starting cash + net cash from sales</small></article>
           {session.status === 'closed' && <article className="summary-card"><span>Cash counted at close</span><strong>{money(session.closing_cash)}</strong><small>Difference: {money(Number(session.closing_cash) - expectedCash)}</small></article>}
         </section>
         <section className="panel report-table-panel">
