@@ -40,6 +40,10 @@ export default function SalePage() {
   function addProduct(product) {
     setError('')
     const stockTracked = product.stock !== null && product.stock !== undefined
+    if (user.role === 'staff' && !stockTracked) {
+      setError(`${product.name} is unavailable because its stock is not tracked.`)
+      return
+    }
     if (stockTracked && product.stock <= 0) return
     const existing = cart.find((item) => item.product_id === product.id)
     if (stockTracked && (existing?.qty || 0) >= product.stock) {
@@ -54,6 +58,10 @@ export default function SalePage() {
   function changeQty(id, delta) {
     const product = products.find((entry) => entry.id === id)
     const stockTracked = product && product.stock !== null && product.stock !== undefined
+    if (delta > 0 && user.role === 'staff' && !stockTracked) {
+      setError(`${product?.name || 'This item'} is unavailable because its stock is not tracked.`)
+      return
+    }
     if (delta > 0 && (!product || (stockTracked && product.stock <= 0))) {
       setError(product ? `Not enough stock for ${product.name}.` : 'This item is no longer available.')
       return
@@ -129,8 +137,9 @@ export default function SalePage() {
               const stockTracked = product.stock !== null && product.stock !== undefined
               const qtyInCart = cart.find((item) => item.product_id === product.id)?.qty || 0
               const available = stockTracked ? Math.max(0, product.stock - qtyInCart) : null
-              const soldOut = available === 0
-              return <button type="button" key={product.id} className="product-card" disabled={soldOut} onClick={() => addProduct(product)}>
+              const soldOut = stockTracked && available === 0
+              const untrackedForStaff = user.role === 'staff' && !stockTracked
+              return <button type="button" key={product.id} className="product-card" disabled={soldOut || untrackedForStaff} onClick={() => addProduct(product)}>
                 <span className="product-name">{product.name}</span><strong>{money(product.price)}</strong>
                 <span className={soldOut ? 'stock sold-out' : 'stock'}>{stockTracked ? soldOut ? 'Sold out' : `${available} left` : 'Stock not tracked'}</span>
               </button>
@@ -144,7 +153,7 @@ export default function SalePage() {
             {cart.map((item) => {
               const product = products.find((entry) => entry.id === item.product_id)
               const stockTracked = product?.stock !== null && product?.stock !== undefined
-              const stockLimitReached = !product || (stockTracked && item.qty >= product.stock)
+              const stockLimitReached = !product || (user.role === 'staff' && !stockTracked) || (stockTracked && item.qty >= product.stock)
               return <div className="cart-row" key={item.product_id}>
                 <div className="cart-item-name">{item.name}<span>{money(item.price)} each</span></div>
                 <div className="quantity-control"><button aria-label={`Remove one ${item.name}`} type="button" onClick={() => changeQty(item.product_id, -1)}><Minus size={16} /></button><strong>{item.qty}</strong><button aria-label={`Add one ${item.name}`} type="button" disabled={stockLimitReached} onClick={() => changeQty(item.product_id, 1)}><Plus size={16} /></button></div>
