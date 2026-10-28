@@ -13,7 +13,7 @@ Starter accounts are seeded in the browser database with hashed passwords. Get t
 
 ## Build and GitHub Pages
 
-Run `npm run build`; the production site is written to `dist/`. `index.html` is at the project root and Vite uses relative asset paths with hash-based routing, so this build can be hosted from a GitHub Pages project subpath. Configure GitHub Pages to serve the generated `dist/` folder (or use a GitHub Actions Pages workflow).
+Run `npm run build`; the production site is written to `dist/`. Vite uses relative asset paths with hash-based routing, so this build can be hosted from a GitHub Pages project subpath. The included GitHub Actions workflow builds and deploys `dist/` whenever you push to `main`. In the repository's **Settings → Pages**, set **Build and deployment → Source** to **GitHub Actions**; serving the repository root instead will show the unbuilt source and the app will not load.
 
 ## Folders
 
